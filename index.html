@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golf Pairing Optimizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+    h2 {
+      font-size: 20px;
+      margin-bottom: 0.5rem;
+    }
+    h3 {
+      font-size: 15px;
+      margin-bottom: 1rem;
+    }
+    p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.5rem 1.25rem;
+      border: 0.5px solid #ccc;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    button:hover {
+      background: #f9f9f9;
+    }
+    input, select, textarea {
+      padding: 6px 8px;
+      border: 0.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #666;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+    }
+    .section {
+      background: white;
+      padding: 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border: 0.5px solid #e0e0e0;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    .grid-3-add {
+      display: grid;
+      grid-template-columns: 1fr 1fr 0.5fr;
+      gap: 8px;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      resize: none;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #666;
+    }
+    .list {
+      max-height: 250px;
+      overflow-y: auto;
+      border: 0.5px solid #ddd;
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 0.5px solid #eee;
+      font-size: 13px;
+    }
+    .list-item:last-child {
+      border-bottom: none;
+    }
+    .delete-btn {
+      padding: 2px 8px;
+      border: 0.5px solid #ffcccc;
+      color: #d32f2f;
+      font-size: 11px;
+      background: white;
+    }
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 0.5px solid #ddd;
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .checkbox-item input {
+      cursor: pointer;
+    }
+    .metric-card {
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    .metric-card p:first-child {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+    .metric-card p:last-child {
+      font-size: 20px;
+      font-weight: 500;
+      color: #333;
+      margin: 0;
+    }
+    .group-card {
+      background: white;
+      border: 0.5px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 12px;
+    }
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      border-bottom: 0.5px solid #eee;
+      padding-bottom: 0.75rem;
+    }
+    .group-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .group-subtext {
+      font-size: 11px;
+      color: #999;
+    }
+    .group-players {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .player-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+    }
+    .handicap {
+      color: #999;
+      font-weight: 500;
+    }
+    .error {
+      padding: 1rem;
+      background: #ffebee;
+      border-radius: 8px;
+      color: #c62828;
+      font-size: 13px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    #results {
+      display: none;
+    }
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 1rem;
+    }
+    .empty-state {
+      font-size: 12px;
+      color: #999;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="margin-bottom: 2rem;">
+      <h2>Golf Tournament Pairing Optimizer</h2>
+      <p>Save golfers locally, build tournaments, and generate balanced pairings.</p>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <!-- GOLFER MANAGEMENT -->
+    <div class="section">
+      <h3>Manage Golfers</h3>
+      <div class="grid-3-add">
+        <input id="newGolferName" type="text" placeholder="Name">
+        <input id="newGolferHandicap" type="number" placeholder="Handicap" step="0.1">
+        <button id="addGolferBtn">Add</button>
+      </div>
+      <div class="button-group" style="margin-top: 1rem;">
+        <button id="exportBtn">Export CSV</button>
+        <button id="importBtn">Import CSV</button>
+      </div>
+      <input id="csvImportInput" type="file" accept=".csv" style="display: none;">
+      <div class="list" id="savedGolfersList"></div>
+    </div>
+
+    <!-- EVENT BUILDER -->
+    <div class="section">
+      <h3>Build Your Event</h3>
+      <label>Select golfers from saved list</label>
+      <div class="checkbox-list" id="golfersCheckboxList"></div>
+
+      <div class="grid-3" style="margin-top: 1rem;">
+        <div>
+          <label>Group size</label>
+          <select id="groupSize">
+            <option value="2">2-ball</option>
+            <option value="3">3-ball</option>
+            <option value="4" selected>4-ball (foursome)</option>
+          </select>
+        </div>
+        <div>
+          <label>Game type</label>
+          <select id="gameType">
+            <option value="stroke">Stroke play</option>
+            <option value="matchplay">Match play</option>
+            <option value="scramble">Scramble</option>
+            <option value="bestball">Best ball</option>
+            <option value="skins">Skins</option>
+            <option value="nassau">Nassau</option>
+            <option value="wolf">Wolf</option>
+          </select>
+        </div>
+        <div>
+          <label>Number of groups</label>
+          <input id="numGroups" type="number" min="1" max="20" placeholder="Auto">
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button id="optimizeBtn" style="font-weight: 600;">Generate Pairings</button>
+        <button id="clearSelectionBtn">Clear Selection</button>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results">
+      <div class="grid-3" style="margin-bottom: 1.5rem;">
+        <div class="metric-card">
+          <p>Total golfers</p>
+          <p id="totalGolfers">0</p>
+        </div>
+        <div class="metric-card">
+          <p>Game format</p>
+          <p id="gameTypeDisplay">Stroke play</p>
+        </div>
+        <div class="metric-card">
+          <p>Balance score</p>
+          <p id="balanceScore">0</p>
+        </div>
+      </div>
+
+      <div id="groupsContainer"></div>
+
+      <div class="section" style="margin-top: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem;">Game format info</label>
+        <p id="gameInfo" style="margin: 0; color: #333;"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const newGolferName = document.getElementById('newGolferName');
+    const newGolferHandicap = document.getElementById('newGolferHandicap');
+    const addGolferBtn = document.getElementById('addGolferBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const csvImportInput = document.getElementById('csvImportInput');
+    const savedGolfersList = document.getElementById('savedGolfersList');
+    const golfersCheckboxList = document.getElementById('golfersCheckboxList');
+    const groupSizeSelect = document.getElementById('groupSize');
+    const gameTypeSelect = document.getElementById('gameType');
+    const numGroupsInput = document.getElementById('numGroups');
+    const optimizeBtn = document.getElementById('optimizeBtn');
+    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+    const resultsDiv = document.getElementById('results');
+    const errorDiv = document.getElementById('error');
+    const groupsContainer = document.getElementById('groupsContainer');
+
+    const gameTypeDescriptions = {
+      stroke: 'Lowest total score wins. Individual competition.',
+      matchplay: 'Head-to-head match. Winner determined hole-by-hole.',
+      scramble: 'Team event. All players hit, best shot is selected for next stroke.',
+      bestball: 'Team event. Lowest individual score per hole counts for team.',
+      skins: 'Bet format. Each hole is worth money/points. Win hole, win skin.',
+      nassau: 'Three-way bet: front nine, back nine, 18 holes.',
+      wolf: 'Rotating player format. Wolf (low handicap rotates) vs. other three.'
+    };
+
+    // Load golfers from localStorage
+    function loadGolfers() {
+      const stored = localStorage.getItem('golfPairingGolfers');
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    // Save golfers to localStorage
+    function saveGolfers(golfers) {
+      localStorage.setItem('golfPairingGolfers', JSON.stringify(golfers));
+    }
+
+    // Get selected golfers
+    function getSelectedGolfers() {
+      const checkboxes = document.querySelectorAll('input[data-golfer-id]:checked');
+      const allGolfers = loadGolfers();
+      return Array.from(checkboxes).map(cb => {
+        const id = cb.dataset.golferId;
+        return allGolfers.find(g => g.id === id);
+      });
+    }
+
+    // Show error
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      resultsDiv.style.display = 'none';
+    }
+
+    // Render saved golfers
+    function renderSavedGolfers() {
+      const golfers = loadGolfers();
+      savedGolfersList.innerHTML = '';
+
+      if (golfers.length === 0) {
+        savedGolfersList.innerHTML = '<div class="empty-state">No golfers saved yet</div>';
+        return;
+      }
+
+      golfers.forEach(golfer => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+          <span><strong>${golfer.name}</strong> <span style="color: #999;">+${golfer.handicap}</span></span>
+          <button class="deleteGolferBtn delete-btn" data-golfer-id="${golfer.id}">Delete</button>
+        `;
+        div.querySelector('.deleteGolferBtn').addEventListener('click', (e) => {
+          const id = e.target.dataset.golferId;
+          const golfers = loadGolfers();
+          const filtered = golfers.filter(g => g.id !== id);
+          saveGolfers(filtered);
+          renderSavedGolfers();
+          renderGolferCheckboxes();
+        });
+        savedGolfersList.appendChild(div);
+      });
+    }
+
+    // Render checkboxes
+    function renderGolferCheckboxes() {
+      const golfers = loadGolfers();
+      golfersCheckboxList.innerHTML = '';
+
+      if (golfers.length === 0) {
+        golfersCheckboxList.innerHTML = '<div class="empty-state">Add golfers first</div>';
+        return;
+      }
+
+      golfers.forEach(golfer => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-item';
+        label.innerHTML = `
+          <input type="checkbox" data-golfer-id="${golfer.id}">
+          <span>${golfer.name} <span style="color: #999;">+${golfer.handicap}</span></span>
+        `;
+        golfersCheckboxList.appendChild(label);
+      });
+    }
+
+    // Add golfer
+    addGolferBtn.addEventListener('click', () => {
+      const name = newGolferName.value.trim();
+      const handicap = newGolferHandicap.value.trim();
+
+      if (!name || !handicap) {
+        showError('Please enter name and handicap');
+        return;
+      }
+
+      const golfers = loadGolfers();
+      golfers.push({
+        id: Date.now().toString(),
+        name,
+        handicap: parseFloat(handicap)
+      });
+      saveGolfers(golfers);
+
+      newGolferName.value = '';
+      newGolferHandicap.value = '';
+      errorDiv.style.display = 'none';
+
+      renderSavedGolfers();
+      renderGolferCheckboxes();
+    });
+
+    // Export CSV
+    exportBtn.addEventListener('click', () => {
+      const golfers = loadGolfers();
+      if (golfers.length === 0) {
+        showError('No golfers to export');
+        return;
+      }
+
+      const csv = 'Name,Handicap\n' + golfers.map(g => `${g.name},${g.handicap}`).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'golfers.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+
+    // Import CSV
+    importBtn.addEventListener('click', () => csvImportInput.click());
+
+    csvImportInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const csv = event.target.result;
+        const lines = csv.split('\n').filter(line => line.trim());
+        const golfers = loadGolfers();
+
+        lines.forEach((line, idx) => {
+          if (idx === 0) return;
+          const [name, handicap] = line.split(',').map(s => s.trim());
+          if (name && handicap) {
+            golfers.push({
+              id: Date.now().toString() + idx,
+              name,
+              handicap: parseFloat(handicap)
+            });
+          }
+        });
+
+        saveGolfers(golfers);
+        renderSavedGolfers();
+        renderGolferCheckboxes();
+        errorDiv.style.display = 'none';
+      };
+      reader.readAsText(file);
+      csvImportInput.value = '';
+    });
+
+    // Clear selection
+    clearSelectionBtn.addEventListener('click', () => {
+      document.querySelectorAll('input[data-golfer-id]').forEach(cb => cb.checked = false);
+    });
+
+    // Optimization
+    function calculateVariance(group) {
+      if (group.length < 2) return 0;
+      const avg = group.reduce((sum, g) => sum + g.handicap, 0) / group.length;
+      const variance = group.reduce((sum, g) => sum + Math.pow(g.handicap - avg, 2), 0) / group.length;
+      return Math.sqrt(variance);
+    }
+
+    function optimizePairings(golfers, groupSize, targetGroups) {
+      if (golfers.length < groupSize) {
+        return { groups: [golfers], leftovers: [] };
+      }
+
+      const sorted = [...golfers].sort((a, b) => a.handicap - b.handicap);
+      let numGroups = targetGroups;
+      if (!numGroups || numGroups < 1) {
+        numGroups = Math.floor(sorted.length / groupSize);
+      }
+      if (numGroups < 1) numGroups = 1;
+
+      const groups = [];
+      const groupsizeInt = parseInt(groupSize);
+
+      for (let i = 0; i < numGroups; i++) {
+        const group = [];
+        for (let j = 0; j < groupsizeInt; j++) {
+          const idx = (i + j * numGroups) % sorted.length;
+          group.push(sorted[idx]);
+        }
+        groups.push(group);
+      }
+
+      const usedCount = numGroups * groupsizeInt;
+      const leftovers = sorted.slice(usedCount);
+      groups.forEach(g => g.sort((a, b) => a.handicap - b.handicap));
+
+      return { groups, leftovers };
+    }
+
+    function getGameTypeDisplay(value) {
+      const map = {
+        stroke: 'Stroke play',
+        matchplay: 'Match play',
+        scramble: 'Scramble',
+        bestball: 'Best ball',
+        skins: 'Skins',
+        nassau: 'Nassau',
+        wolf: 'Wolf'
+      };
+      return map[value] || 'Stroke play';
+    }
+
+    function renderResults(golfers, groupSize, gameType) {
+      const numGroups = numGroupsInput.value ? parseInt(numGroupsInput.value) : null;
+      const { groups, leftovers } = optimizePairings(golfers, groupSize, numGroups);
+      
+      resultsDiv.style.display = 'block';
+      errorDiv.style.display = 'none';
+
+      document.getElementById('totalGolfers').textContent = golfers.length;
+      document.getElementById('gameTypeDisplay').textContent = getGameTypeDisplay(gameType);
+      document.getElementById('gameInfo').textContent = gameTypeDescriptions[gameType];
+
+      const allVariances = groups.map(calculateVariance);
+      const avgBalance = allVariances.length > 0 
+        ? Math.round(allVariances.reduce((a, b) => a + b, 0) / allVariances.length * 100) / 100
+        : 0;
+      document.getElementById('balanceScore').textContent = avgBalance.toFixed(2);
+
+      groupsContainer.innerHTML = '';
+      groups.forEach((group, idx) => {
+        const variance = calculateVariance(group);
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'group-card';
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'group-header';
+        headerDiv.innerHTML = `
+          <div>
+            <div class="group-title">Group ${idx + 1}</div>
+            <div class="group-subtext">${getGameTypeDisplay(gameType)}</div>
+          </div>
+          <span style="font-size: 12px; color: #999;">balance: ${variance.toFixed(2)}</span>
+        `;
+        groupDiv.appendChild(headerDiv);
+
+        const playersList = document.createElement('div');
+        playersList.className = 'group-players';
+        group.forEach(golfer => {
+          const playerDiv = document.createElement('div');
+          playerDiv.className = 'player-row';
+          playerDiv.innerHTML = `
+            <span>${golfer.name}</span>
+            <span class="handicap">+${golfer.handicap}</span>
+          `;
+          playersList.appendChild(playerDiv);
+        });
+        groupDiv.appendChild(playersList);
+        groupsContainer.appendChild(groupDiv);
+      });
+
+      if (leftovers.length > 0) {
+        const leftoverDiv = document.createElement('div');
+        leftoverDiv.className = 'group-card';
+        leftoverDiv.style.background = '#f9f9f9';
+        leftoverDiv.innerHTML = `<p style="margin: 0 0 0.75rem 0; font-size: 13px; font-weight: 500; color: #999;">Unassigned (${leftovers.length})</p>`;
+        const playersList = document.createElement('div');
+        playersList.className = 'group-players';
+        leftovers.forEach(golfer => {
+          const playerDiv = document.createElement('div');
+          playerDiv.className = 'player-row';
+          playerDiv.innerHTML = `
+            <span>${golfer.name}</span>
+            <span class="handicap">+${golfer.handicap}</span>
+          `;
+          playersList.appendChild(playerDiv);
+        });
+        leftoverDiv.appendChild(playersList);
+        groupsContainer.appendChild(leftoverDiv);
+      }
+    }
+
+    // Generate pairings
+    optimizeBtn.addEventListener('click', () => {
+      const selected = getSelectedGolfers();
+      if (selected.length === 0) {
+        showError('Select at least one golfer');
+        return;
+      }
+
+      const groupSize = groupSizeSelect.value;
+      const gameType = gameTypeSelect.value;
+
+      if (selected.length < parseInt(groupSize)) {
+        showError(`You selected ${selected.length} golfer(s) but chose ${groupSize}-ball groups. Need at least ${groupSize}.`);
+        return;
+      }
+
+      renderResults(selected, groupSize, gameType);
+    });
+
+    // Initialize
+    renderSavedGolfers();
+    renderGolferCheckboxes();
+  </script>
+</body>
+</html>
